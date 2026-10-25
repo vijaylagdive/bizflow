@@ -12,4 +12,6 @@ public interface VendorLedgerRepository extends JpaRepository<VendorLedger, Long
 	List<VendorLedger> findAllByOrderByEntryDateAscIdAsc();
 
 	Optional<VendorLedger> findByPurchaseOrderId(Long purchaseOrderId);
+
+	Optional<VendorLedger> findByCashbookId(Long cashbookId);
 }

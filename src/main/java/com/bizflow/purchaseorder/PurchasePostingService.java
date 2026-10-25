@@ -7,12 +7,9 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.bizflow.inventory.InventoryItem;
-import com.bizflow.inventory.InventoryRepository;
+import com.bizflow.inventory.InventoryStockService;
 import com.bizflow.ledger.VendorLedger;
 import com.bizflow.ledger.VendorLedgerRepository;
-import com.bizflow.product.Product;
-import com.bizflow.product.ProductRepository;
 import com.bizflow.vendor.Vendor;
 import com.bizflow.vendor.VendorRepository;
 
@@ -24,16 +21,13 @@ public class PurchasePostingService {
 	private static final String TYPE_PAYMENT = "payment";
 
 	private final VendorLedgerRepository vendorLedgerRepository;
-	private final InventoryRepository inventoryRepository;
-	private final ProductRepository productRepository;
+	private final InventoryStockService inventoryStockService;
 	private final VendorRepository vendorRepository;
 
 	public PurchasePostingService(VendorLedgerRepository vendorLedgerRepository,
-			InventoryRepository inventoryRepository, ProductRepository productRepository,
-			VendorRepository vendorRepository) {
+			InventoryStockService inventoryStockService, VendorRepository vendorRepository) {
 		this.vendorLedgerRepository = vendorLedgerRepository;
-		this.inventoryRepository = inventoryRepository;
-		this.productRepository = productRepository;
+		this.inventoryStockService = inventoryStockService;
 		this.vendorRepository = vendorRepository;
 	}
 
@@ -61,16 +55,28 @@ public class PurchasePostingService {
 	}
 
 	public VendorLedger recordPayment(java.time.LocalDate date, Long vendorId, String vendorName, BigDecimal credit) {
-		VendorLedger entry = new VendorLedger();
+		return recordPayment(date, vendorId, vendorName, credit, null);
+	}
+
+	public VendorLedger recordPayment(java.time.LocalDate date, Long vendorId, String vendorName, BigDecimal credit,
+			Long cashbookId) {
+		VendorLedger entry = cashbookId == null ? new VendorLedger()
+				: vendorLedgerRepository.findByCashbookId(cashbookId).orElseGet(VendorLedger::new);
 		entry.setEntryDate(date);
 		entry.setEntryType(TYPE_PAYMENT);
 		entry.setVendorId(vendorId);
 		entry.setVendorName(resolveVendorName(vendorId, vendorName));
 		entry.setDebit(BigDecimal.ZERO);
 		entry.setCredit(credit);
+		entry.setCashbookId(cashbookId);
 		VendorLedger saved = vendorLedgerRepository.save(entry);
 		recalculateVendorBalance(vendorId);
 		return vendorLedgerRepository.findById(saved.getId()).orElse(saved);
+	}
+
+	public void reverseCashbookPayment(Long cashbookId, Long vendorId) {
+		vendorLedgerRepository.findByCashbookId(cashbookId).ifPresent(vendorLedgerRepository::delete);
+		recalculateVendorBalance(vendorId);
 	}
 
 	public static List<ItemSnapshot> snapshot(List<PurchaseOrderItem> items) {
@@ -102,31 +108,12 @@ public class PurchasePostingService {
 	}
 
 	private void adjustStock(ItemSnapshot item, boolean add) {
-		if (item.productId() == null) {
-			return;
-		}
-		String unit = item.unit() == null ? "" : item.unit();
-		InventoryItem stock = inventoryRepository.findByProductIdAndUnit(item.productId(), unit).orElseGet(() -> {
-			InventoryItem created = new InventoryItem();
-			created.setProductId(item.productId());
-			created.setProductName(resolveProductName(item.productId()));
-			created.setUnit(unit);
-			created.setCurrentStock(BigDecimal.ZERO);
-			created.setStockValue(BigDecimal.ZERO);
-			return created;
-		});
-		BigDecimal qty = nullSafe(item.qty());
-		BigDecimal value = nullSafe(item.totalAmount());
 		if (add) {
-			stock.setCurrentStock(nullSafe(stock.getCurrentStock()).add(qty));
-			stock.setStockValue(nullSafe(stock.getStockValue()).add(value));
-			stock.setProductName(resolveProductName(item.productId()));
+			inventoryStockService.addStock(item.productId(), item.qty(), item.unit(), item.totalAmount());
 		}
 		else {
-			stock.setCurrentStock(nullSafe(stock.getCurrentStock()).subtract(qty));
-			stock.setStockValue(nullSafe(stock.getStockValue()).subtract(value));
+			inventoryStockService.removeStock(item.productId(), item.qty(), item.unit(), item.totalAmount());
 		}
-		inventoryRepository.save(stock);
 	}
 
 	private void recalculateVendorBalance(Long vendorId) {
@@ -145,13 +132,6 @@ public class PurchasePostingService {
 			vendor.setCurrentBalance(vendorBalance);
 			vendorRepository.save(vendor);
 		});
-	}
-
-	private String resolveProductName(Long productId) {
-		return productRepository.findById(productId)
-				.map(Product::getProductName)
-				.filter(name -> name != null && !name.isBlank())
-				.orElse("Product " + productId);
 	}
 
 	private String resolveVendorName(Long vendorId, String vendorName) {

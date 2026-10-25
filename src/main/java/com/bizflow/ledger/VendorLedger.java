@@ -46,6 +46,9 @@ public class VendorLedger {
 	@Column(name = "purchase_order_id")
 	private Long purchaseOrderId;
 
+	@Column(name = "cashbook_id")
+	private Long cashbookId;
+
 	public Long getId() {
 		return id;
 	}
@@ -112,6 +115,14 @@ public class VendorLedger {
 
 	public void setPurchaseOrderId(Long purchaseOrderId) {
 		this.purchaseOrderId = purchaseOrderId;
+	}
+
+	public Long getCashbookId() {
+		return cashbookId;
+	}
+
+	public void setCashbookId(Long cashbookId) {
+		this.cashbookId = cashbookId;
 	}
 
 }
