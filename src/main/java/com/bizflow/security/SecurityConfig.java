@@ -1,6 +1,7 @@
 package com.bizflow.security;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -29,8 +30,8 @@ import jakarta.servlet.http.HttpServletResponse;
 @Configuration
 public class SecurityConfig {
 
-	@Value("${app.cors.origins:http://localhost:4200}")
-	private String corsOrigins;
+	@Value("${app.cors.origins:}")
+	private String extraCorsOrigins;
 
 	@Bean
 	PasswordEncoder passwordEncoder() {
@@ -75,10 +76,16 @@ public class SecurityConfig {
 	@Bean
 	CorsConfigurationSource corsConfigurationSource() {
 		CorsConfiguration config = new CorsConfiguration();
-		config.setAllowedOrigins(Arrays.stream(corsOrigins.split(","))
-				.map(String::trim)
-				.filter(origin -> !origin.isEmpty())
-				.toList());
+		List<String> origins = new ArrayList<>(List.of(
+				"http://localhost:4200",
+				"https://bizflowui.onrender.com"));
+		if (extraCorsOrigins != null && !extraCorsOrigins.isBlank()) {
+			Arrays.stream(extraCorsOrigins.split(","))
+					.map(String::trim)
+					.filter(origin -> !origin.isEmpty() && !origins.contains(origin))
+					.forEach(origins::add);
+		}
+		config.setAllowedOrigins(origins);
 		config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 		config.setAllowedHeaders(List.of("*"));
 		config.setAllowCredentials(true);
