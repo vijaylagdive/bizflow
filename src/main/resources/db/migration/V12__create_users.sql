@@ -1,0 +1,6 @@
+CREATE TABLE users (
+    user_id BIGSERIAL PRIMARY KEY,
+    username VARCHAR(80) NOT NULL UNIQUE,
+    password_hash VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

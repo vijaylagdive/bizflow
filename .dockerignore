@@ -1,0 +1,10 @@
+.git
+.idea
+.vscode
+target
+*.md
+*.iml
+.mvn/wrapper/maven-wrapper.jar
+src/test
+terminals
+agent-transcripts
