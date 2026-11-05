@@ -1,5 +1,7 @@
 package com.bizflow.product;
 
+import java.math.BigDecimal;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.Column;
@@ -24,6 +26,12 @@ public class Product {
 	@Column(name = "product_name", nullable = false, length = 200)
 	private String productName = "";
 
+	@Column(name = "gst_percent", nullable = false, precision = 5, scale = 2)
+	private BigDecimal gstPercent = BigDecimal.ZERO;
+
+	@Column(name = "hsn_sac", nullable = false, length = 8)
+	private String hsnSacCode = "";
+
 	@JsonIgnore
 	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@JoinColumn(name = "category_id", nullable = false)
@@ -39,6 +47,22 @@ public class Product {
 
 	public void setProductName(String productName) {
 		this.productName = productName;
+	}
+
+	public BigDecimal getGstPercent() {
+		return gstPercent;
+	}
+
+	public void setGstPercent(BigDecimal gstPercent) {
+		this.gstPercent = gstPercent;
+	}
+
+	public String getHsnSacCode() {
+		return hsnSacCode;
+	}
+
+	public void setHsnSacCode(String hsnSacCode) {
+		this.hsnSacCode = hsnSacCode;
 	}
 
 	public Long getCategoryId() {

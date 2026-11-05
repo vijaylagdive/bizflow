@@ -125,10 +125,12 @@ class MasterDataControllerTests {
 		String productLocation = mockMvc.perform(post("/products")
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
-								{"productName":"A4 Paper","categoryId":%s}
+								{"productName":"A4 Paper","categoryId":%s,"gstPercent":18.00,"hsnSac":"48025690"}
 								""".formatted(categoryId)))
 				.andExpect(status().isCreated())
 				.andExpect(jsonPath("$.productName").value("A4 Paper"))
+				.andExpect(jsonPath("$.gstPercent").value(18.00))
+				.andExpect(jsonPath("$.hsnSac").value("48025690"))
 				.andExpect(jsonPath("$.categoryId").value(categoryId))
 				.andReturn()
 				.getResponse()
@@ -137,10 +139,12 @@ class MasterDataControllerTests {
 		mockMvc.perform(put(productLocation)
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
-								{"productName":"A4 Ream","categoryId":%s}
+								{"productName":"A4 Ream","categoryId":%s,"gstPercent":12.00,"hsnSac":"998314"}
 								""".formatted(categoryId)))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.productName").value("A4 Ream"));
+				.andExpect(jsonPath("$.productName").value("A4 Ream"))
+				.andExpect(jsonPath("$.gstPercent").value(12.00))
+				.andExpect(jsonPath("$.hsnSac").value("998314"));
 
 		mockMvc.perform(get("/products"))
 				.andExpect(status().isOk())

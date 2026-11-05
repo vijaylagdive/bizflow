@@ -9,8 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface PurchaseOrderRepository extends JpaRepository<PurchaseOrder, Long> {
 
 	@EntityGraph(attributePaths = "items")
-	@Override
-	List<PurchaseOrder> findAll();
+	List<PurchaseOrder> findAllByOrderByPurchaseDateAscIdAsc();
 
 	@EntityGraph(attributePaths = "items")
 	@Override

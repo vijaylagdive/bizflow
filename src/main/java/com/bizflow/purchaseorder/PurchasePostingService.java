@@ -127,11 +127,6 @@ public class PurchasePostingService {
 			entry.setBalance(running);
 		}
 		vendorLedgerRepository.saveAll(entries);
-		final BigDecimal vendorBalance = running;
-		vendorRepository.findById(vendorId).ifPresent(vendor -> {
-			vendor.setCurrentBalance(vendorBalance);
-			vendorRepository.save(vendor);
-		});
 	}
 
 	private String resolveVendorName(Long vendorId, String vendorName) {

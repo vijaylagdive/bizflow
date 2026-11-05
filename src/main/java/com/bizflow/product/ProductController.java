@@ -48,6 +48,8 @@ public class ProductController {
 				.orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Product category not found"));
 		Product product = new Product();
 		product.setProductName(request.getProductName());
+		product.setGstPercent(request.getGstPercent());
+		product.setHsnSacCode(normalizeHsnSac(request.getHsnSacCode()));
 		product.setCategory(category);
 		Product saved = productRepository.save(product);
 		Product loaded = productRepository.findById(saved.getProductId()).orElse(saved);
@@ -61,6 +63,8 @@ public class ProductController {
 		ProductCategory category = productCategoryRepository.findById(request.getCategoryId())
 				.orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Product category not found"));
 		product.setProductName(request.getProductName());
+		product.setGstPercent(request.getGstPercent());
+		product.setHsnSacCode(normalizeHsnSac(request.getHsnSacCode()));
 		product.setCategory(category);
 		productRepository.save(product);
 		return productRepository.findById(productId).orElse(product);
@@ -73,6 +77,10 @@ public class ProductController {
 		}
 		productRepository.deleteById(productId);
 		return ResponseEntity.noContent().build();
+	}
+
+	private static String normalizeHsnSac(String hsnSac) {
+		return hsnSac == null ? "" : hsnSac.trim();
 	}
 
 }

@@ -100,7 +100,9 @@ public class SalesOrderController {
 		order.setInvoiceNumber(request.getInvoiceNumber());
 		order.setCustomerId(request.getCustomerId());
 		order.setCustomerName(request.getCustomerName());
-		order.setCashDiscount(request.getCashDiscount() != null ? request.getCashDiscount() : BigDecimal.ZERO);
+		order.setCashDiscount(zeroIfNull(request.getCashDiscount()));
+		order.setCgst(zeroIfNull(request.getCgst()));
+		order.setSgst(zeroIfNull(request.getSgst()));
 		order.clearItems();
 
 		BigDecimal itemsTotal = BigDecimal.ZERO;
@@ -126,16 +128,21 @@ public class SalesOrderController {
 		item.setQty(request.getQty());
 		item.setUnit(request.getUnit());
 		item.setRate(request.getRate());
-		item.setGstPercent(request.getGstPercent() != null ? request.getGstPercent() : BigDecimal.ZERO);
+		item.setDiscount(zeroIfNull(request.getDiscount()));
+		item.setGstPercent(zeroIfNull(request.getGstPercent()));
 		if (request.getTotalAmount() != null) {
 			item.setTotalAmount(request.getTotalAmount());
 		}
 		else {
 			BigDecimal qty = request.getQty() != null ? request.getQty() : BigDecimal.ZERO;
 			BigDecimal rate = request.getRate() != null ? request.getRate() : BigDecimal.ZERO;
-			item.setTotalAmount(qty.multiply(rate).setScale(2, RoundingMode.HALF_UP));
+			item.setTotalAmount(qty.multiply(rate).subtract(item.getDiscount()).setScale(2, RoundingMode.HALF_UP));
 		}
 		return item;
+	}
+
+	private static BigDecimal zeroIfNull(BigDecimal value) {
+		return value != null ? value : BigDecimal.ZERO;
 	}
 
 }

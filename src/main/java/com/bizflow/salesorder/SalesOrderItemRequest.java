@@ -19,6 +19,8 @@ public class SalesOrderItemRequest {
 	@NotNull
 	private BigDecimal rate;
 
+	private BigDecimal discount;
+
 	private BigDecimal totalAmount;
 
 	private BigDecimal gstPercent;
@@ -53,6 +55,14 @@ public class SalesOrderItemRequest {
 
 	public void setRate(BigDecimal rate) {
 		this.rate = rate;
+	}
+
+	public BigDecimal getDiscount() {
+		return discount;
+	}
+
+	public void setDiscount(BigDecimal discount) {
+		this.discount = discount;
 	}
 
 	public BigDecimal getTotalAmount() {

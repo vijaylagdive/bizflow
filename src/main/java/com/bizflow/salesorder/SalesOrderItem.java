@@ -39,6 +39,9 @@ public class SalesOrderItem {
 	@Column(nullable = false, precision = 14, scale = 2)
 	private BigDecimal rate = BigDecimal.ZERO;
 
+	@Column(nullable = false, precision = 14, scale = 2)
+	private BigDecimal discount = BigDecimal.ZERO;
+
 	@Column(name = "total_amount", nullable = false, precision = 14, scale = 2)
 	private BigDecimal totalAmount = BigDecimal.ZERO;
 
@@ -91,6 +94,14 @@ public class SalesOrderItem {
 
 	public void setRate(BigDecimal rate) {
 		this.rate = rate;
+	}
+
+	public BigDecimal getDiscount() {
+		return discount;
+	}
+
+	public void setDiscount(BigDecimal discount) {
+		this.discount = discount;
 	}
 
 	public BigDecimal getTotalAmount() {

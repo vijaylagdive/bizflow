@@ -1,7 +1,5 @@
 package com.bizflow.vendor;
 
-import java.math.BigDecimal;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -26,9 +24,6 @@ public class Vendor {
 
 	@Column(name = "contact_number", length = 30)
 	private String contactNumber;
-
-	@Column(name = "current_balance", nullable = false, precision = 14, scale = 2)
-	private BigDecimal currentBalance = BigDecimal.ZERO;
 
 	public Long getVendorId() {
 		return vendorId;
@@ -56,14 +51,6 @@ public class Vendor {
 
 	public void setContactNumber(String contactNumber) {
 		this.contactNumber = contactNumber;
-	}
-
-	public BigDecimal getCurrentBalance() {
-		return currentBalance;
-	}
-
-	public void setCurrentBalance(BigDecimal currentBalance) {
-		this.currentBalance = currentBalance;
 	}
 
 }

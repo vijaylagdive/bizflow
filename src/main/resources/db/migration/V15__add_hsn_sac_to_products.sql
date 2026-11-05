@@ -1,0 +1,2 @@
+ALTER TABLE products
+    ADD COLUMN hsn_sac VARCHAR(8) NOT NULL DEFAULT '';

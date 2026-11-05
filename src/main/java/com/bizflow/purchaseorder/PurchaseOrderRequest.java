@@ -27,6 +27,10 @@ public class PurchaseOrderRequest {
 
 	private BigDecimal cashDiscount;
 
+	private BigDecimal cgst;
+
+	private BigDecimal sgst;
+
 	private List<@Valid PurchaseOrderItemRequest> items = new ArrayList<>();
 
 	public LocalDate getPurchaseDate() {
@@ -75,6 +79,22 @@ public class PurchaseOrderRequest {
 
 	public void setCashDiscount(BigDecimal cashDiscount) {
 		this.cashDiscount = cashDiscount;
+	}
+
+	public BigDecimal getCgst() {
+		return cgst;
+	}
+
+	public void setCgst(BigDecimal cgst) {
+		this.cgst = cgst;
+	}
+
+	public BigDecimal getSgst() {
+		return sgst;
+	}
+
+	public void setSgst(BigDecimal sgst) {
+		this.sgst = sgst;
 	}
 
 	public List<PurchaseOrderItemRequest> getItems() {

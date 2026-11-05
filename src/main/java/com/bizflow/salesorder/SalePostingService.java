@@ -117,11 +117,6 @@ public class SalePostingService {
 			entry.setBalance(running);
 		}
 		customerLedgerRepository.saveAll(entries);
-		final BigDecimal customerBalance = running;
-		customerRepository.findById(customerId).ifPresent(customer -> {
-			customer.setCurrentBalance(customerBalance);
-			customerRepository.save(customer);
-		});
 	}
 
 	private String resolveCustomerName(Long customerId, String customerName) {

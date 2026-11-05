@@ -120,7 +120,8 @@ class CashbookControllerTests {
 
 		mockMvc.perform(get("/vendors/1"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.currentBalance").value(-250.00));
+				.andExpect(jsonPath("$.name").value("Acme Supplies"))
+				.andExpect(jsonPath("$.currentBalance").doesNotExist());
 
 		String receiptLocation = mockMvc.perform(post("/cashbooks")
 						.contentType(MediaType.APPLICATION_JSON)
@@ -151,7 +152,8 @@ class CashbookControllerTests {
 
 		mockMvc.perform(get("/customers/1"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.currentBalance").value(-300.00));
+				.andExpect(jsonPath("$.name").value("Ravi Stores"))
+				.andExpect(jsonPath("$.currentBalance").doesNotExist());
 
 		mockMvc.perform(get("/cashbooks"))
 				.andExpect(status().isOk())

@@ -33,12 +33,15 @@ class PurchaseOrderControllerTests {
 				  "vendorId": 12,
 				  "vendorName": "Acme Supplies",
 				  "cashDiscount": 50.00,
+				  "cgst": 225.05,
+				  "sgst": 225.05,
 				  "items": [
 				    {
 				      "productId": 101,
 				      "qty": 10,
 				      "unit": "pcs",
 				      "rate": 250.05,
+				      "discount": 100.00,
 				      "gstPercent": 18.00
 				    }
 				  ]
@@ -54,8 +57,11 @@ class PurchaseOrderControllerTests {
 				.andExpect(jsonPath("$.vendorName").value("Acme Supplies"))
 				.andExpect(jsonPath("$.items", hasSize(1)))
 				.andExpect(jsonPath("$.items[0].productId").value(101))
-				.andExpect(jsonPath("$.items[0].totalAmount").value(2500.50))
+				.andExpect(jsonPath("$.items[0].discount").value(100.00))
+				.andExpect(jsonPath("$.items[0].totalAmount").value(2400.50))
 				.andExpect(jsonPath("$.cashDiscount").value(50.00))
+				.andExpect(jsonPath("$.cgst").value(225.05))
+				.andExpect(jsonPath("$.sgst").value(225.05))
 				.andExpect(jsonPath("$.items[0].gstPercent").value(18.00))
 				.andReturn()
 				.getResponse()
@@ -65,7 +71,10 @@ class PurchaseOrderControllerTests {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.invoiceNumber").value("INV-1001"))
 				.andExpect(jsonPath("$.cashDiscount").value(50.00))
+				.andExpect(jsonPath("$.cgst").value(225.05))
+				.andExpect(jsonPath("$.sgst").value(225.05))
 				.andExpect(jsonPath("$.items", hasSize(1)))
+				.andExpect(jsonPath("$.items[0].discount").value(100.00))
 				.andExpect(jsonPath("$.items[0].gstPercent").value(18.00));
 
 		mockMvc.perform(get("/purchase-orders"))
@@ -77,15 +86,15 @@ class PurchaseOrderControllerTests {
 				.andExpect(jsonPath("$", hasSize(1)))
 				.andExpect(jsonPath("$[0].type").value("purchase"))
 				.andExpect(jsonPath("$[0].vendorName").value("Acme Supplies"))
-				.andExpect(jsonPath("$[0].debit").value(2500.50))
+				.andExpect(jsonPath("$[0].debit").value(2400.50))
 				.andExpect(jsonPath("$[0].credit").value(0))
-				.andExpect(jsonPath("$[0].balance").value(2500.50));
+				.andExpect(jsonPath("$[0].balance").value(2400.50));
 
 		mockMvc.perform(get("/inventory/product/101"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$", hasSize(1)))
 				.andExpect(jsonPath("$[0].currentStock").value(10.000))
-				.andExpect(jsonPath("$[0].stockValue").value(2500.50))
+				.andExpect(jsonPath("$[0].stockValue").value(2400.50))
 				.andExpect(jsonPath("$[0].unit").value("pcs"));
 
 		String updateBody = """
@@ -95,12 +104,15 @@ class PurchaseOrderControllerTests {
 				  "vendorId": 12,
 				  "vendorName": "Acme Supplies",
 				  "cashDiscount": 5.00,
+				  "cgst": 2.00,
+				  "sgst": 2.00,
 				  "items": [
 				    {
 				      "productId": 202,
 				      "qty": 2,
 				      "unit": "kg",
 				      "rate": 40.00,
+				      "discount": 5.00,
 				      "gstPercent": 5.00
 				    }
 				  ]
@@ -115,14 +127,17 @@ class PurchaseOrderControllerTests {
 				.andExpect(jsonPath("$.items", hasSize(1)))
 				.andExpect(jsonPath("$.items[0].productId").value(202))
 				.andExpect(jsonPath("$.items[0].gstPercent").value(5.00))
+				.andExpect(jsonPath("$.items[0].discount").value(5.00))
 				.andExpect(jsonPath("$.cashDiscount").value(5.00))
-				.andExpect(jsonPath("$.purchaseTotalAmount").value(80.00));
+				.andExpect(jsonPath("$.cgst").value(2.00))
+				.andExpect(jsonPath("$.sgst").value(2.00))
+				.andExpect(jsonPath("$.purchaseTotalAmount").value(75.00));
 
 		mockMvc.perform(get("/vendor-ledgers").param("vendorId", "12"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$", hasSize(1)))
-				.andExpect(jsonPath("$[0].debit").value(80.00))
-				.andExpect(jsonPath("$[0].balance").value(80.00));
+				.andExpect(jsonPath("$[0].debit").value(75.00))
+				.andExpect(jsonPath("$[0].balance").value(75.00));
 
 		mockMvc.perform(get("/inventory/product/101"))
 				.andExpect(status().isOk())
@@ -131,7 +146,7 @@ class PurchaseOrderControllerTests {
 		mockMvc.perform(get("/inventory/product/202"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$[0].currentStock").value(2.000))
-				.andExpect(jsonPath("$[0].stockValue").value(80.00));
+				.andExpect(jsonPath("$[0].stockValue").value(75.00));
 
 		mockMvc.perform(delete(location))
 				.andExpect(status().isNoContent());
@@ -146,6 +161,46 @@ class PurchaseOrderControllerTests {
 		mockMvc.perform(get("/inventory/product/202"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$[0].currentStock").value(0));
+	}
+
+	@Test
+	void listPurchaseOrdersByPurchaseDate() throws Exception {
+		postOrder("2026-10-17", "INV-LATER");
+		postOrder("2026-10-01", "INV-EARLIER");
+		postOrder("2026-10-17", "INV-SAME-DAY");
+
+		mockMvc.perform(get("/purchase-orders"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$", hasSize(3)))
+				.andExpect(jsonPath("$[0].invoiceNumber").value("INV-EARLIER"))
+				.andExpect(jsonPath("$[0].purchaseDate").value("2026-10-01"))
+				.andExpect(jsonPath("$[1].invoiceNumber").value("INV-LATER"))
+				.andExpect(jsonPath("$[2].invoiceNumber").value("INV-SAME-DAY"));
+	}
+
+	private void postOrder(String purchaseDate, String invoiceNumber) throws Exception {
+		String body = """
+				{
+				  "purchaseDate": "%s",
+				  "invoiceNumber": "%s",
+				  "vendorId": 12,
+				  "vendorName": "Acme Supplies",
+				  "items": [
+				    {
+				      "productId": 101,
+				      "qty": 1,
+				      "unit": "pcs",
+				      "rate": 10.00,
+				      "gstPercent": 0
+				    }
+				  ]
+				}
+				""".formatted(purchaseDate, invoiceNumber);
+
+		mockMvc.perform(post("/purchase-orders")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content(body))
+				.andExpect(status().isCreated());
 	}
 
 }

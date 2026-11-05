@@ -1,0 +1,2 @@
+ALTER TABLE products
+    ADD COLUMN gst_percent NUMERIC(5, 2) NOT NULL DEFAULT 0.00;

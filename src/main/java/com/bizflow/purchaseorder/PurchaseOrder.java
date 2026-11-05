@@ -48,6 +48,12 @@ public class PurchaseOrder {
 
 	@Column(name = "cash_discount", nullable = false, precision = 14, scale = 2)
 	private BigDecimal cashDiscount = BigDecimal.ZERO;
+
+	@Column(nullable = false, precision = 14, scale = 2)
+	private BigDecimal cgst = BigDecimal.ZERO;
+
+	@Column(nullable = false, precision = 14, scale = 2)
+	private BigDecimal sgst = BigDecimal.ZERO;
 	
 	@OneToMany(mappedBy = "purchaseOrder", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<PurchaseOrderItem> items = new ArrayList<>();
@@ -62,6 +68,12 @@ public class PurchaseOrder {
 		}
 		if (cashDiscount == null) {
 			cashDiscount = BigDecimal.ZERO;
+		}
+		if (cgst == null) {
+			cgst = BigDecimal.ZERO;
+		}
+		if (sgst == null) {
+			sgst = BigDecimal.ZERO;
 		}
 	}
 
@@ -120,6 +132,22 @@ public class PurchaseOrder {
 
 	public void setCashDiscount(BigDecimal cashDiscount) {
 		this.cashDiscount = cashDiscount;
+	}
+
+	public BigDecimal getCgst() {
+		return cgst;
+	}
+
+	public void setCgst(BigDecimal cgst) {
+		this.cgst = cgst;
+	}
+
+	public BigDecimal getSgst() {
+		return sgst;
+	}
+
+	public void setSgst(BigDecimal sgst) {
+		this.sgst = sgst;
 	}
 
 	public LocalDateTime getCreatedAt() {
