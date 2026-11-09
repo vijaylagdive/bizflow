@@ -3,8 +3,14 @@ package com.bizflow.purchaseorder;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URI;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,10 +19,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.bizflow.common.PageResponse;
+import com.bizflow.common.PagedQueries;
+
+import jakarta.persistence.criteria.Predicate;
 import jakarta.validation.Valid;
 
 import static org.springframework.http.HttpStatus.NOT_FOUND;
@@ -36,8 +47,21 @@ public class PurchaseOrderController {
 	}
 
 	@GetMapping
-	public List<PurchaseOrder> list() {
-		return purchaseOrderRepository.findAllByOrderByPurchaseDateAscIdAsc();
+	public PageResponse<PurchaseOrder> list(@RequestParam(required = false) LocalDate fromDate,
+			@RequestParam(required = false) LocalDate toDate,
+			@PageableDefault(size = 20, sort = { "purchaseDate", "id" }) Pageable pageable) {
+		Specification<PurchaseOrder> spec = (root, query, cb) -> {
+			List<Predicate> predicates = new ArrayList<>();
+			if (fromDate != null) {
+				predicates.add(cb.greaterThanOrEqualTo(root.get("purchaseDate"), fromDate));
+			}
+			if (toDate != null) {
+				predicates.add(cb.lessThanOrEqualTo(root.get("purchaseDate"), toDate));
+			}
+			return cb.and(predicates.toArray(Predicate[]::new));
+		};
+		Page<PurchaseOrder> page = purchaseOrderRepository.findAll(spec, pageable);
+		return PagedQueries.loadByIds(page, PurchaseOrder::getId, purchaseOrderRepository::findByIdIn);
 	}
 
 	@GetMapping("/{id}")

@@ -79,7 +79,8 @@ class PurchaseOrderControllerTests {
 
 		mockMvc.perform(get("/purchase-orders"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$", hasSize(1)));
+				.andExpect(jsonPath("$.content", hasSize(1)))
+				.andExpect(jsonPath("$.totalElements").value(1));
 
 		mockMvc.perform(get("/vendor-ledgers").param("vendorId", "12"))
 				.andExpect(status().isOk())
@@ -171,11 +172,31 @@ class PurchaseOrderControllerTests {
 
 		mockMvc.perform(get("/purchase-orders"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$", hasSize(3)))
-				.andExpect(jsonPath("$[0].invoiceNumber").value("INV-EARLIER"))
-				.andExpect(jsonPath("$[0].purchaseDate").value("2026-10-01"))
-				.andExpect(jsonPath("$[1].invoiceNumber").value("INV-LATER"))
-				.andExpect(jsonPath("$[2].invoiceNumber").value("INV-SAME-DAY"));
+				.andExpect(jsonPath("$.content", hasSize(3)))
+				.andExpect(jsonPath("$.totalElements").value(3))
+				.andExpect(jsonPath("$.content[0].invoiceNumber").value("INV-EARLIER"))
+				.andExpect(jsonPath("$.content[0].purchaseDate").value("2026-10-01"))
+				.andExpect(jsonPath("$.content[1].invoiceNumber").value("INV-LATER"))
+				.andExpect(jsonPath("$.content[2].invoiceNumber").value("INV-SAME-DAY"));
+
+		mockMvc.perform(get("/purchase-orders").param("fromDate", "2026-10-17").param("toDate", "2026-10-17"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.content", hasSize(2)))
+				.andExpect(jsonPath("$.content[0].invoiceNumber").value("INV-LATER"))
+				.andExpect(jsonPath("$.content[1].invoiceNumber").value("INV-SAME-DAY"));
+
+		mockMvc.perform(get("/purchase-orders").param("page", "0").param("size", "1"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.content", hasSize(1)))
+				.andExpect(jsonPath("$.content[0].invoiceNumber").value("INV-EARLIER"))
+				.andExpect(jsonPath("$.page").value(0))
+				.andExpect(jsonPath("$.size").value(1))
+				.andExpect(jsonPath("$.totalElements").value(3))
+				.andExpect(jsonPath("$.totalPages").value(3));
+
+		mockMvc.perform(get("/purchase-orders").param("page", "1").param("size", "1"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.content[0].invoiceNumber").value("INV-LATER"));
 	}
 
 	private void postOrder(String purchaseDate, String invoiceNumber) throws Exception {

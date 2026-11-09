@@ -1,16 +1,23 @@
 package com.bizflow.cashbook;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.bizflow.account.Account;
 import com.bizflow.account.AccountRepository;
+import com.bizflow.common.PageResponse;
 import com.bizflow.purchaseorder.PurchasePostingService;
 import com.bizflow.salesorder.SalePostingService;
+
+import jakarta.persistence.criteria.Predicate;
 
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
@@ -36,11 +43,33 @@ public class CashbookService {
 		this.salePostingService = salePostingService;
 	}
 
-	public List<CashbookEntry> list(Long accountId) {
-		if (accountId != null) {
-			return cashbookRepository.findByAccountIdOrderByEntryDateAscIdAsc(accountId);
+	public PageResponse<CashbookEntry> list(Long accountId, String transactionType, String fromTo, LocalDate fromDate,
+			LocalDate toDate, Pageable pageable) {
+		String type = normalize(transactionType);
+		if (!type.isEmpty() && !TYPE_PAYMENT.equals(type) && !TYPE_RECEIPT.equals(type)) {
+			throw new ResponseStatusException(BAD_REQUEST, "transactionType must be payment or receipt");
 		}
-		return cashbookRepository.findAllByOrderByEntryDateAscIdAsc();
+		String party = fromTo == null ? "" : fromTo.trim();
+		Specification<CashbookEntry> spec = (root, query, cb) -> {
+			List<Predicate> predicates = new ArrayList<>();
+			if (accountId != null) {
+				predicates.add(cb.equal(root.get("accountId"), accountId));
+			}
+			if (!type.isEmpty()) {
+				predicates.add(cb.equal(root.get("transactionType"), type));
+			}
+			if (!party.isEmpty()) {
+				predicates.add(cb.equal(cb.lower(root.get("fromTo")), party.toLowerCase()));
+			}
+			if (fromDate != null) {
+				predicates.add(cb.greaterThanOrEqualTo(root.get("entryDate"), fromDate));
+			}
+			if (toDate != null) {
+				predicates.add(cb.lessThanOrEqualTo(root.get("entryDate"), toDate));
+			}
+			return cb.and(predicates.toArray(Predicate[]::new));
+		};
+		return PageResponse.from(cashbookRepository.findAll(spec, pageable));
 	}
 
 	public CashbookEntry get(Long id) {

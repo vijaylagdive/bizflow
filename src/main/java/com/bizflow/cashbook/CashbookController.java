@@ -1,8 +1,10 @@
 package com.bizflow.cashbook;
 
 import java.net.URI;
-import java.util.List;
+import java.time.LocalDate;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.bizflow.common.PageResponse;
 
 import jakarta.validation.Valid;
 
@@ -27,8 +31,11 @@ public class CashbookController {
 	}
 
 	@GetMapping
-	public List<CashbookEntry> list(@RequestParam(required = false) Long accountId) {
-		return cashbookService.list(accountId);
+	public PageResponse<CashbookEntry> list(@RequestParam(required = false) Long accountId,
+			@RequestParam(required = false) String transactionType, @RequestParam(required = false) String fromTo,
+			@RequestParam(required = false) LocalDate fromDate, @RequestParam(required = false) LocalDate toDate,
+			@PageableDefault(size = 20, sort = { "entryDate", "id" }) Pageable pageable) {
+		return cashbookService.list(accountId, transactionType, fromTo, fromDate, toDate, pageable);
 	}
 
 	@GetMapping("/{id}")

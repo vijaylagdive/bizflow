@@ -157,8 +157,8 @@ class CashbookControllerTests {
 
 		mockMvc.perform(get("/cashbooks"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$", hasSize(3)))
-				.andExpect(jsonPath("$[2].balance").value(1050.00));
+				.andExpect(jsonPath("$.content", hasSize(3)))
+				.andExpect(jsonPath("$.content[2].balance").value(1050.00));
 
 		mockMvc.perform(delete(receiptLocation))
 				.andExpect(status().isNoContent());
@@ -169,9 +169,83 @@ class CashbookControllerTests {
 
 		mockMvc.perform(get("/cashbooks"))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$", hasSize(2)))
-				.andExpect(jsonPath("$[1].account").value("HDFC"))
-				.andExpect(jsonPath("$[1].balance").value(750.00));
+				.andExpect(jsonPath("$.content", hasSize(2)))
+				.andExpect(jsonPath("$.content[1].account").value("HDFC"))
+				.andExpect(jsonPath("$.content[1].balance").value(750.00));
+	}
+
+	@Test
+	void filtersAndPaginatesCashbook() throws Exception {
+		String accountLocation = mockMvc.perform(post("/accounts")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{"accountName":"Cash","accountType":"Saving"}
+								"""))
+				.andExpect(status().isCreated())
+				.andReturn()
+				.getResponse()
+				.getHeader("Location");
+		String accountId = accountLocation.substring(accountLocation.lastIndexOf('/') + 1);
+
+		mockMvc.perform(post("/vendors")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{"name":"Acme Supplies"}
+								"""))
+				.andExpect(status().isCreated());
+
+		mockMvc.perform(post("/customers")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{"name":"Ravi Stores"}
+								"""))
+				.andExpect(status().isCreated());
+
+		postCashbook(accountId, "2026-10-25", "receipt", "other", null, "1000.00");
+		postCashbook(accountId, "2026-10-26", "payment", "Acme Supplies", 1L, "250.00");
+		postCashbook(accountId, "2026-10-27", "receipt", "Ravi Stores", 1L, "300.00");
+
+		mockMvc.perform(get("/cashbooks").param("transactionType", "Payment"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.content", hasSize(1)))
+				.andExpect(jsonPath("$.content[0].transactionType").value("payment"))
+				.andExpect(jsonPath("$.content[0].fromTo").value("Acme Supplies"));
+
+		mockMvc.perform(get("/cashbooks").param("fromTo", "Ravi Stores"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.content", hasSize(1)))
+				.andExpect(jsonPath("$.content[0].fromTo").value("Ravi Stores"));
+
+		mockMvc.perform(get("/cashbooks").param("fromDate", "2026-10-26").param("toDate", "2026-10-27"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.content", hasSize(2)))
+				.andExpect(jsonPath("$.content[0].date").value("2026-10-26"))
+				.andExpect(jsonPath("$.content[1].date").value("2026-10-27"));
+
+		mockMvc.perform(get("/cashbooks").param("page", "0").param("size", "2"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.content", hasSize(2)))
+				.andExpect(jsonPath("$.page").value(0))
+				.andExpect(jsonPath("$.size").value(2))
+				.andExpect(jsonPath("$.totalElements").value(3))
+				.andExpect(jsonPath("$.totalPages").value(2));
+	}
+
+	private void postCashbook(String accountId, String date, String transactionType, String fromTo, Long partyId,
+			String amount) throws Exception {
+		String partyJson = partyId == null ? "" : ", \"partyId\": " + partyId;
+		mockMvc.perform(post("/cashbooks")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("""
+								{
+								  "date": "%s",
+								  "transactionType": "%s",
+								  "accountId": %s,
+								  "fromTo": "%s"%s,
+								  "amount": %s
+								}
+								""".formatted(date, transactionType, accountId, fromTo, partyJson, amount)))
+				.andExpect(status().isCreated());
 	}
 
 }
