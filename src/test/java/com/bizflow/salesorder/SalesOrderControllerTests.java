@@ -109,12 +109,9 @@ class SalesOrderControllerTests {
 		mockMvc.perform(get("/customer-ledgers").param("customerId", "1"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$", hasSize(1)))
-				.andExpect(jsonPath("$[0].type").value("Sale"))
+				.andExpect(jsonPath("$[0].customerId").value(1))
 				.andExpect(jsonPath("$[0].customerName").value("Ravi Stores"))
-				.andExpect(jsonPath("$[0].saleOrderNo").value("SAL-001"))
-				.andExpect(jsonPath("$[0].debit").value(280.00))
-				.andExpect(jsonPath("$[0].credit").value(0))
-				.andExpect(jsonPath("$[0].balance").value(280.00));
+				.andExpect(jsonPath("$[0].currentBalance").value(280.00));
 
 		mockMvc.perform(get("/inventory/product/303"))
 				.andExpect(status().isOk())
@@ -157,9 +154,7 @@ class SalesOrderControllerTests {
 		mockMvc.perform(get("/customer-ledgers").param("customerId", "1"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$", hasSize(1)))
-				.andExpect(jsonPath("$[0].saleOrderNo").value("SAL-001-A"))
-				.andExpect(jsonPath("$[0].debit").value(150.00))
-				.andExpect(jsonPath("$[0].balance").value(150.00));
+				.andExpect(jsonPath("$[0].currentBalance").value(150.00));
 
 		mockMvc.perform(get("/inventory/product/303"))
 				.andExpect(status().isOk())

@@ -113,10 +113,9 @@ class CashbookControllerTests {
 		mockMvc.perform(get("/vendor-ledgers").param("vendorId", "1"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$", hasSize(1)))
-				.andExpect(jsonPath("$[0].type").value("payment"))
-				.andExpect(jsonPath("$[0].credit").value(250.00))
-				.andExpect(jsonPath("$[0].debit").value(0))
-				.andExpect(jsonPath("$[0].balance").value(-250.00));
+				.andExpect(jsonPath("$[0].vendorId").value(1))
+				.andExpect(jsonPath("$[0].vendorName").value("Acme Supplies"))
+				.andExpect(jsonPath("$[0].currentBalance").value(-250.00));
 
 		mockMvc.perform(get("/vendors/1"))
 				.andExpect(status().isOk())
@@ -146,9 +145,9 @@ class CashbookControllerTests {
 		mockMvc.perform(get("/customer-ledgers").param("customerId", "1"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$", hasSize(1)))
-				.andExpect(jsonPath("$[0].type").value("receipt"))
-				.andExpect(jsonPath("$[0].credit").value(300.00))
-				.andExpect(jsonPath("$[0].balance").value(-300.00));
+				.andExpect(jsonPath("$[0].customerId").value(1))
+				.andExpect(jsonPath("$[0].customerName").value("Ravi Stores"))
+				.andExpect(jsonPath("$[0].currentBalance").value(-300.00));
 
 		mockMvc.perform(get("/customers/1"))
 				.andExpect(status().isOk())
