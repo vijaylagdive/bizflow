@@ -32,14 +32,11 @@ public class CustomerLedgerController {
 	}
 
 	@GetMapping
-	public List<CustomerLedgerBalance> list(@RequestParam(required = false) Long customerId) {
+	public List<CustomerLedger> list(@RequestParam(required = false) Long customerId) {
 		if (customerId != null) {
-			return customerLedgerRepository.findLatestByCustomerId(customerId)
-					.map(CustomerLedgerBalance::from)
-					.map(List::of)
-					.orElseGet(List::of);
+			return customerLedgerRepository.findByCustomerIdOrderByEntryDateAscIdAsc(customerId);
 		}
-		return customerLedgerRepository.findLatestPerCustomer().stream().map(CustomerLedgerBalance::from).toList();
+		return customerLedgerRepository.findLatestPerCustomer();
 	}
 
 	@GetMapping("/{id}")

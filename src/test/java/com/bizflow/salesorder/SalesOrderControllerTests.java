@@ -109,9 +109,12 @@ class SalesOrderControllerTests {
 		mockMvc.perform(get("/customer-ledgers").param("customerId", "1"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$", hasSize(1)))
-				.andExpect(jsonPath("$[0].customerId").value(1))
+				.andExpect(jsonPath("$[0].type").value("Sale"))
 				.andExpect(jsonPath("$[0].customerName").value("Ravi Stores"))
-				.andExpect(jsonPath("$[0].currentBalance").value(280.00));
+				.andExpect(jsonPath("$[0].saleOrderNo").value("SAL-001"))
+				.andExpect(jsonPath("$[0].debit").value(280.00))
+				.andExpect(jsonPath("$[0].credit").value(0))
+				.andExpect(jsonPath("$[0].balance").value(280.00));
 
 		mockMvc.perform(get("/inventory/product/303"))
 				.andExpect(status().isOk())
@@ -154,7 +157,9 @@ class SalesOrderControllerTests {
 		mockMvc.perform(get("/customer-ledgers").param("customerId", "1"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$", hasSize(1)))
-				.andExpect(jsonPath("$[0].currentBalance").value(150.00));
+				.andExpect(jsonPath("$[0].saleOrderNo").value("SAL-001-A"))
+				.andExpect(jsonPath("$[0].debit").value(150.00))
+				.andExpect(jsonPath("$[0].balance").value(150.00));
 
 		mockMvc.perform(get("/inventory/product/303"))
 				.andExpect(status().isOk())
@@ -213,6 +218,22 @@ class SalesOrderControllerTests {
 				.andExpect(jsonPath("$.content[0].invoiceNumber").value("SAL-EARLIER"))
 				.andExpect(jsonPath("$.totalElements").value(2))
 				.andExpect(jsonPath("$.totalPages").value(2));
+
+		mockMvc.perform(get("/customer-ledgers"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$", hasSize(1)))
+				.andExpect(jsonPath("$[0].customerId").value(1))
+				.andExpect(jsonPath("$[0].date").value("2026-10-27"))
+				.andExpect(jsonPath("$[0].saleOrderNo").value("SAL-LATER"))
+				.andExpect(jsonPath("$[0].balance").value(150.00));
+
+		mockMvc.perform(get("/customer-ledgers").param("customerId", "1"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$", hasSize(2)))
+				.andExpect(jsonPath("$[0].saleOrderNo").value("SAL-EARLIER"))
+				.andExpect(jsonPath("$[0].balance").value(75.00))
+				.andExpect(jsonPath("$[1].saleOrderNo").value("SAL-LATER"))
+				.andExpect(jsonPath("$[1].balance").value(150.00));
 	}
 
 	private void postSale(String salesDate, String invoiceNumber) throws Exception {

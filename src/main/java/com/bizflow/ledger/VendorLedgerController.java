@@ -32,14 +32,11 @@ public class VendorLedgerController {
 	}
 
 	@GetMapping
-	public List<VendorLedgerBalance> list(@RequestParam(required = false) Long vendorId) {
+	public List<VendorLedger> list(@RequestParam(required = false) Long vendorId) {
 		if (vendorId != null) {
-			return vendorLedgerRepository.findLatestByVendorId(vendorId)
-					.map(VendorLedgerBalance::from)
-					.map(List::of)
-					.orElseGet(List::of);
+			return vendorLedgerRepository.findByVendorIdOrderByEntryDateAscIdAsc(vendorId);
 		}
-		return vendorLedgerRepository.findLatestPerVendor().stream().map(VendorLedgerBalance::from).toList();
+		return vendorLedgerRepository.findLatestPerVendor();
 	}
 
 	@GetMapping("/{id}")

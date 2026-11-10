@@ -85,9 +85,11 @@ class PurchaseOrderControllerTests {
 		mockMvc.perform(get("/vendor-ledgers").param("vendorId", "12"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$", hasSize(1)))
-				.andExpect(jsonPath("$[0].vendorId").value(12))
+				.andExpect(jsonPath("$[0].type").value("purchase"))
 				.andExpect(jsonPath("$[0].vendorName").value("Acme Supplies"))
-				.andExpect(jsonPath("$[0].currentBalance").value(2400.50));
+				.andExpect(jsonPath("$[0].debit").value(2400.50))
+				.andExpect(jsonPath("$[0].credit").value(0))
+				.andExpect(jsonPath("$[0].balance").value(2400.50));
 
 		mockMvc.perform(get("/inventory/product/101"))
 				.andExpect(status().isOk())
@@ -135,7 +137,8 @@ class PurchaseOrderControllerTests {
 		mockMvc.perform(get("/vendor-ledgers").param("vendorId", "12"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$", hasSize(1)))
-				.andExpect(jsonPath("$[0].currentBalance").value(75.00));
+				.andExpect(jsonPath("$[0].debit").value(75.00))
+				.andExpect(jsonPath("$[0].balance").value(75.00));
 
 		mockMvc.perform(get("/inventory/product/101"))
 				.andExpect(status().isOk())
@@ -194,6 +197,21 @@ class PurchaseOrderControllerTests {
 		mockMvc.perform(get("/purchase-orders").param("page", "1").param("size", "1"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.content[0].invoiceNumber").value("INV-LATER"));
+
+		mockMvc.perform(get("/vendor-ledgers"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$", hasSize(1)))
+				.andExpect(jsonPath("$[0].vendorId").value(12))
+				.andExpect(jsonPath("$[0].date").value("2026-10-17"))
+				.andExpect(jsonPath("$[0].balance").value(30.00));
+
+		mockMvc.perform(get("/vendor-ledgers").param("vendorId", "12"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$", hasSize(3)))
+				.andExpect(jsonPath("$[0].date").value("2026-10-01"))
+				.andExpect(jsonPath("$[0].balance").value(10.00))
+				.andExpect(jsonPath("$[2].date").value("2026-10-17"))
+				.andExpect(jsonPath("$[2].balance").value(30.00));
 	}
 
 	private void postOrder(String purchaseDate, String invoiceNumber) throws Exception {
